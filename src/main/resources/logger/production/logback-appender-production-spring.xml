@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<included>
+
+    <include resource="logger/default/defaults-spring.xml"/>
+
+    <property resource="application.properties" />
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+
+     <!--   установка поддержки цветного отображения логов в консоли Windows.-->
+     <!-- <withJansi>true</withJansi>-->
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE-ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+        <file>${logging.file.dir}/${logging.file.name.var}</file>
+
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <charset>UTF-8</charset>
+            <Pattern>${FILE_LOG_PATTERN}</Pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+
+            <!--  В данном случае, архивный каталог создается каждый день.
+             Здесь обрататите внимание на  `dd-` в имени файла rollover...
+             -->
+            <fileNamePattern>
+                ${logging.file.dir.backup}/${logging.file.archive.format.name}
+            </fileNamePattern>
+         <cleanHistoryOnStart>false</cleanHistoryOnStart>
+
+        </rollingPolicy>
+
+    </appender>
+
+</included>

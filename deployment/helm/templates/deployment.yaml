@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ms-auto-release.fullname" . }}
+  labels:
+{{ include "ms-auto-release.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "ms-auto-release.name" . }}
+      release: {{ .Release.Name }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 100%
+      maxUnavailable: 0%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+{{ include "ms-auto-release.labels" . | indent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: MAX_HEAP
+              value: "{{ .Values.java.heap.max }}"
+            - name: MIN_HEAP
+              value: "{{ .Values.java.heap.min }}"
+            - name: JAVA_PROFILE
+              value: "{{ .Values.java.profile }}"
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: {{ .Values.probes.delaySeconds }} # start checking after 180s after pod starts, should be logger than service start time. Some service takes minutes to start, so we set a big value here.
+            periodSeconds: {{ .Values.probes.periodSeconds }} # check health check api every 10 seconds
+            timeoutSeconds: {{ .Values.probes.timeoutSeconds }} # if response time is logger than 3 seconds, we consider the check as failed
+            failureThreshold: {{ .Values.probes.failureThreshold }} # if check fails for 3 times in a row, we consider the pod is in a bad state, pod will be restarted
+            successThreshold: {{ .Values.probes.successThreshold }} # if check succeeds for once, we consider the pod is back to normal  
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: {{ .Values.probes.delaySeconds }} # start checking after 180s after pod starts, should be logger than service start time. Some service takes minutes to start, so we set a big value here.
+            periodSeconds: {{ .Values.probes.periodSeconds }} # check health check api every 10 seconds
+            timeoutSeconds: {{ .Values.probes.timeoutSeconds }} # if response time is logger than 3 seconds, we consider the check as failed
+            failureThreshold: {{ .Values.probes.failureThreshold }} # if check fails for 3 times in a row, we consider the pod is in a bad state, pod will be restarted
+            successThreshold: {{ .Values.probes.successThreshold }} # if check succeeds for once, we consider the pod is back to normal  
+          {{- if .Values.startupProbe.enabled }}
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            periodSeconds: {{ .Values.startupProbe.periodSeconds }} # check health check api every 10 seconds
+            timeoutSeconds: {{ .Values.probes.timeoutSeconds }} 
+            failureThreshold: {{ .Values.startupProbe.failureThreshold }} 
+          {{- end }}
+#      imagePullSecrets:
+#        - name: registrypullsecret
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}

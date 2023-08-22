@@ -1,0 +1,84 @@
+# Default values for ms-auto-release.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository:
+  tag: 
+  pullPolicy: IfNotPresent
+
+nameOverride: "ms-auto-release"
+fullnameOverride: "ms-auto-release"
+
+service:
+  type: ClusterIP
+  port: 7034
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  path: /
+  hosts:
+    - chart-example.local
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  limits:
+    cpu: 800m
+    memory: 1024Mi
+  requests:
+    cpu: 550m
+    memory: 450Mi
+
+java:
+  heap:
+    max: 1019M
+    min: 445M
+  profile:
+
+nodeSelector: 
+  kubernetes.io/os: linux
+  # node-role.kubernetes.io/worker: worker
+  runtime: "bts"
+
+tolerations: []
+
+affinity: {}
+
+monitoring:
+  enable: true
+
+PodDisruptionBudget:
+    enabled: false
+    minimumCount: 1
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 150
+  targetMemoryUtilizationPercentage: 150
+ 
+probes:
+  delaySeconds: 0
+  periodSeconds: 3
+  timeoutSeconds: 3
+  failureThreshold: 5
+  successThreshold: 1
+
+startupProbe:
+  enabled: true
+  periodSeconds: 3
+  timeoutSeconds: 5
+  failureThreshold: 80
